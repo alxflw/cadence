@@ -466,3 +466,119 @@ func TestCheckInvalidCompositeEquality(t *testing.T) {
 		test(compositeKind)
 	}
 }
+
+func TestCheckNumericSuperTypeBinaryOperations(t *testing.T) {
+
+	t.Parallel()
+
+	types := []sema.IntegerRangedType{
+		sema.NumberType,
+		sema.SignedNumberType,
+		sema.IntegerType,
+		sema.SignedIntegerType,
+		sema.FixedPointType,
+		sema.SignedFixedPointType,
+	}
+
+	t.Run("Arithmetic", func(t *testing.T) {
+		t.Parallel()
+
+		operations := []ast.Operation{
+			ast.OperationPlus,
+			ast.OperationMinus,
+			ast.OperationMul,
+			ast.OperationDiv,
+			ast.OperationMod,
+			ast.OperationBitwiseAnd,
+			ast.OperationBitwiseOr,
+			ast.OperationBitwiseXor,
+			ast.OperationBitwiseRightShift,
+			ast.OperationBitwiseLeftShift,
+		}
+
+		for _, typ := range types {
+			for _, op := range operations {
+				t.Run(fmt.Sprintf("%s %s", typ, op.String()), func(t *testing.T) {
+					t.Parallel()
+
+					code := fmt.Sprintf(
+						`
+                      fun test(a: %[1]s, b: %[1]s): %[1]s {
+                          return a %[2]s b
+                      }
+                    `,
+						typ.String(),
+						op.Symbol(),
+					)
+
+					_, err := ParseAndCheck(t, code)
+					errs := ExpectCheckerErrors(t, err, 1)
+					assert.IsType(t, &sema.InvalidBinaryOperandsError{}, errs[0])
+				})
+			}
+		}
+	})
+
+	t.Run("Non-equality comparison", func(t *testing.T) {
+		t.Parallel()
+
+		operations := []ast.Operation{
+			ast.OperationLess,
+			ast.OperationLessEqual,
+			ast.OperationGreater,
+			ast.OperationGreaterEqual,
+		}
+
+		for _, typ := range types {
+			for _, op := range operations {
+				t.Run(fmt.Sprintf("%s %s", typ, op.String()), func(t *testing.T) {
+					t.Parallel()
+
+					code := fmt.Sprintf(
+						`
+                      fun test(a: %[1]s, b: %[1]s): Bool {
+                          return a %[2]s b
+                      }
+                    `,
+						typ.String(),
+						op.Symbol(),
+					)
+
+					_, err := ParseAndCheck(t, code)
+					errs := ExpectCheckerErrors(t, err, 1)
+					assert.IsType(t, &sema.InvalidBinaryOperandsError{}, errs[0])
+				})
+			}
+		}
+	})
+
+	t.Run("Equality", func(t *testing.T) {
+		t.Parallel()
+
+		operations := []ast.Operation{
+			ast.OperationEqual,
+			ast.OperationNotEqual,
+		}
+
+		for _, typ := range types {
+			for _, op := range operations {
+				t.Run(fmt.Sprintf("%s %s", typ, op.String()), func(t *testing.T) {
+					t.Parallel()
+
+					code := fmt.Sprintf(
+						`
+                      fun test(a: %[1]s, b: %[1]s): Bool {
+                          return a %[2]s b
+                      }
+                    `,
+						typ.String(),
+						op.Symbol(),
+					)
+
+					_, err := ParseAndCheck(t, code)
+					assert.NoError(t, err)
+				})
+			}
+		}
+	})
+}

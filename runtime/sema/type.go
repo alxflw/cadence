@@ -1504,6 +1504,20 @@ const UFix64TypeMaxInt = fixedpoint.UFix64TypeMaxInt
 const UFix64TypeMinFractional = fixedpoint.UFix64TypeMinFractional
 const UFix64TypeMaxFractional = fixedpoint.UFix64TypeMaxFractional
 
+func IsNumericSuperType(numberType Type) bool {
+	switch numberType {
+	case NumberType,
+		SignedNumberType,
+		IntegerType,
+		SignedIntegerType,
+		FixedPointType,
+		SignedFixedPointType:
+		return true
+	default:
+		return false
+	}
+}
+
 // ArrayType
 
 type ArrayType interface {
