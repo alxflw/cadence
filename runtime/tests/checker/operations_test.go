@@ -581,4 +581,41 @@ func TestCheckNumericSuperTypeBinaryOperations(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("Saturating arithmetics", func(t *testing.T) {
+		t.Parallel()
+
+		functions := []string{
+			sema.NumericTypeSaturatingAddFunctionName,
+			sema.NumericTypeSaturatingSubtractFunctionName,
+			sema.NumericTypeSaturatingMultiplyFunctionName,
+			sema.NumericTypeSaturatingDivideFunctionName,
+		}
+
+		for _, typ := range types {
+			for _, funcName := range functions {
+				t.Run(fmt.Sprintf("%s %s", typ, funcName), func(t *testing.T) {
+					t.Parallel()
+
+					code := fmt.Sprintf(
+						`
+                      fun test(a: %[1]s, b: %[1]s): AnyStruct {
+                          return a.%[2]s(b)
+                      }
+                    `,
+						typ.String(),
+						funcName,
+					)
+
+					_, err := ParseAndCheck(t, code)
+					errs := ExpectCheckerErrors(t, err, 1)
+
+					require.IsType(t, &sema.NotDeclaredMemberError{}, errs[0])
+					notDeclaredError := errs[0].(*sema.NotDeclaredMemberError)
+
+					assert.Equal(t, funcName, notDeclaredError.Name)
+				})
+			}
+		}
+	})
 }
