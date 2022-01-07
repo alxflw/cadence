@@ -169,12 +169,12 @@ func maybeDestroy(interpreter *Interpreter, getLocationRange func() LocationRang
 	resourceKindedValue.Destroy(interpreter, getLocationRange)
 }
 
-// ReferenceTrackedValue is a value that is stored in a specific storage ID
-// and must be tracked when a reference of it is taken.
+// ReferenceTrackedResourceKindedValue is a resource-kinded value
+// that must be tracked when a reference of it is taken.
 //
-type ReferenceTrackedValue interface {
-	Value
-	IsReferenceTrackedValue()
+type ReferenceTrackedResourceKindedValue interface {
+	ResourceKindedValue
+	IsReferenceTrackedResourceKindedValue()
 	StorageID() atree.StorageID
 }
 
@@ -1011,7 +1011,7 @@ var _ atree.Value = &ArrayValue{}
 var _ EquatableValue = &ArrayValue{}
 var _ ValueIndexableValue = &ArrayValue{}
 var _ MemberAccessibleValue = &ArrayValue{}
-var _ ReferenceTrackedValue = &ArrayValue{}
+var _ ReferenceTrackedResourceKindedValue = &ArrayValue{}
 
 func (*ArrayValue) IsValue() {}
 
@@ -1608,7 +1608,7 @@ func (v *ArrayValue) Storable(_ atree.SlabStorage, _ atree.Address, _ uint64) (a
 	return atree.StorageIDStorable(v.StorageID()), nil
 }
 
-func (v *ArrayValue) IsReferenceTrackedValue() {}
+func (v *ArrayValue) IsReferenceTrackedResourceKindedValue() {}
 
 func (v *ArrayValue) Transfer(
 	interpreter *Interpreter,
@@ -1684,10 +1684,10 @@ func (v *ArrayValue) Transfer(
 		v.array = array
 
 		newStorageID := array.StorageID()
-		interpreter.updateReferencedValues(
+		interpreter.updateReferencedResource(
 			currentStorageID,
 			newStorageID,
-			func(value Value) {
+			func(value ReferenceTrackedResourceKindedValue) {
 				value.(*ArrayValue).array = array
 			},
 		)
@@ -11329,7 +11329,7 @@ var _ Value = &CompositeValue{}
 var _ EquatableValue = &CompositeValue{}
 var _ HashableValue = &CompositeValue{}
 var _ MemberAccessibleValue = &CompositeValue{}
-var _ ReferenceTrackedValue = &CompositeValue{}
+var _ ReferenceTrackedResourceKindedValue = &CompositeValue{}
 
 func (*CompositeValue) IsValue() {}
 
@@ -11850,7 +11850,7 @@ func (v *CompositeValue) IsResourceKinded(_ *Interpreter) bool {
 	return v.Kind == common.CompositeKindResource
 }
 
-func (v *CompositeValue) IsReferenceTrackedValue() {}
+func (v *CompositeValue) IsReferenceTrackedResourceKindedValue() {}
 
 func (v *CompositeValue) Transfer(
 	interpreter *Interpreter,
@@ -11929,10 +11929,10 @@ func (v *CompositeValue) Transfer(
 
 		newStorageID := dictionary.StorageID()
 
-		interpreter.updateReferencedValues(
+		interpreter.updateReferencedResource(
 			currentStorageID,
 			newStorageID,
-			func(value Value) {
+			func(value ReferenceTrackedResourceKindedValue) {
 				value.(*CompositeValue).dictionary = dictionary
 			},
 		)
@@ -12207,7 +12207,7 @@ var _ atree.Value = &DictionaryValue{}
 var _ EquatableValue = &DictionaryValue{}
 var _ ValueIndexableValue = &DictionaryValue{}
 var _ MemberAccessibleValue = &DictionaryValue{}
-var _ ReferenceTrackedValue = &DictionaryValue{}
+var _ ReferenceTrackedResourceKindedValue = &DictionaryValue{}
 
 func (*DictionaryValue) IsValue() {}
 
@@ -12772,7 +12772,7 @@ func (v *DictionaryValue) Storable(_ atree.SlabStorage, _ atree.Address, _ uint6
 	return atree.StorageIDStorable(v.StorageID()), nil
 }
 
-func (v *DictionaryValue) IsReferenceTrackedValue() {}
+func (v *DictionaryValue) IsReferenceTrackedResourceKindedValue() {}
 
 func (v *DictionaryValue) Transfer(
 	interpreter *Interpreter,
@@ -12861,10 +12861,10 @@ func (v *DictionaryValue) Transfer(
 
 		newStorageID := dictionary.StorageID()
 
-		interpreter.updateReferencedValues(
+		interpreter.updateReferencedResource(
 			currentStorageID,
 			newStorageID,
-			func(value Value) {
+			func(value ReferenceTrackedResourceKindedValue) {
 				value.(*DictionaryValue).dictionary = dictionary
 			},
 		)
